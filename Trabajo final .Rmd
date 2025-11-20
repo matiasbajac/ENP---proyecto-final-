@@ -1,6 +1,5 @@
 ---
 title: "Proyecto final"
-author: "Matias Bajac"
 date: '2025-11-07'
 output:
   pdf_document: default
@@ -38,52 +37,34 @@ $$
 \varnothing & \text{con probabilidad } \alpha .
 \end{cases}
 $$
-Siempre tendrá covertura exacta $1 - \alpha$, lo cual es, lo que queremos lugrar con la ecuación (1).
+Siempre tendrá cobertura exacta $1 - \alpha$, lo cual es, lo que queremos lugrar con la ecuación (1).
 
-La pregunta real sería, podriamos lograr la ecuación (1) en muestras finitas sin asumir ninguna distribución P, haciendo algo "no trivial"?. En particular, queremos que nuestra estrategia se adapte a la dificultad del problema, en el siguiente sentido: cuanto más fácil ea predecir $Y_{n+1}$ a partir de las variablex explicativas $X_{n+1}$, mas chico nos gustaría que fuera el conjunto $\hat{C_{n}}(X_{n+1})$
+La pregunta real sería, podriamos lograr la ecuación (1) en muestras finitas sin asumir ninguna distribución P, haciendo algo "no trivial"?. En particular, queremos que nuestra estrategia se adapte a la dificultad del problema, en el siguiente sentido: cuanto más fácil sea predecir $Y_{n+1}$ a partir de las variables explicativas $X_{n+1}$, mas chico nos gustaría que fuera el conjunto $\hat{C_{n}}(X_{n+1})$
 
-
-
-
-
-
-Supongamos que nuestro objetivo inicial es encontrar una cola de intervalo de predicción. $\hat{C}_n= (\infty,\hat{q}_n]$ 
-
-
+Supongamos que nuestro objetivo inicial es encontrar una cola de intervalo de predicción. $\hat{C}_n= (-\infty,\hat{q}_n]$ 
 
 Dada esta ecuación, un punto de partida natural sería fijar $\hat{q}_n$, como el cuantil muestral de nivel $1- \alpha$ de $Y_1,....,Y_n$ el cual denotamos por
 
-$$\hat{q}_n = Quantile( 1 - \alpha;\frac{1}{n} \sum_{i=1}^n \delta_{Y_i})$$
-donde $\frac{1}{n} \sum_{i=1}^{n} \delta_{Y_i}$ es la distribución empirica: pone pesos uniformes $\frac{1}{n}$ en cada dato  $Y_i$
-
-Mientras que $Quantile_{ 1-\alpha}$ devuelve el minimo valor q tal que la función de distribución acumulada empírica alcanza al menos $1 - \alpha$
-
-
  $$P(Y_{n+1} \leq \hat{q}_n) \sim 1 - \alpha$$
-Esto es exacto cuando $n \rightarrow \infty$, bajo ciertas codiciones (que garantizan la convergencia del cuantil muestran al cuantil poblacional).  Se puede algo que satisfaga la ecuación anterior en muestra finita?.
 
-## Usar rangos para formar quantiles ajustados
 
-Aquí es donde comienza  la primera idea detras de la predicción conformal. Con $Y_{n+1}$ es iid con $Y_1,Y_2,...,Y_n$, entonces
+$$
+\hat q_n =
+\begin{cases}
+Y[(1- \alpha)(n +1)] \ si \  [(1 - \alpha)(n+1) \leq n, \\
+\infty  \ en \ caso \ contrario 
+\end{cases}
+$$
+Aquí $Y_{(1)},Y_{(2)},...Y_{n}$ son los estadisticos de orden de la muestra $Y_{(1)} \leq Y_{(2)} \leq..., Y_{(n)}$. Se verifica la cobertura en muestra finita de la ecuación (1) debido a la independencia de las variables.Por otra parte  el rango de $Y_{n+1}$ se distribuye uniforme en el conjunto $\{1,...,n+1\}$, es decir, la predicción $Y_{n+1}$ tiene probabildiad $\frac{1}{n+1}$ de caer en cualquier posición del conjunto ordenado.
 
-$$P( Y_{n+1} esta\  entre
-los\ [(1 - \alpha)(n+1)] valores\ mas\ pequeños\ de\ Y_1,....,Y_{n+1}  \geq 1- \alpha)$$
-
-que es equivalente a decir que 
-
-$$P( Y_{n+1} esta\  entre
-los\ [(1 - \alpha)(n+1)] valores\ mas\ pequeños\ de\ Y_1,....,Y_{n}  \geq 1- \alpha)$$
-
- 
 
 ## Método de Naive  
 Veamos la primera idea clave sobre regresion, donde observamos ambos $X_i$ and $Y_i \ \in R \ i=1,....,n$, y queremos un conjunto de predicción para $Y_{n+1}$ basado en $X_{n+1}$. Supongamos que $\hat{f_n}$ es cualquier predictor puntual, entrenado en $(X_i,Y_i)$, $i =1,...,n$.
-En otras palabras, $\hat{f}_n(x)$ predice el valor de y que esperamos observar en x
-
+En otras palabras, $\hat{f}_n(x)$ predice el valor de y que esperamos observar en x.
 
 Definimos los resudios de los datos de entrenamiento,
 
-$$e_i =|Y_i -\hat{f}_n(X_i)|, \ i=1,....,n$$
+$$R_i =|Y_i -\hat{f}_n(X_i)|, \ i=1,....,n$$
 tenemos $\hat{q_n} = [(1 - \alpha)(n+1)]$ el mas chico de $R_1,...R_n$, podemos definir el conjunto de predicción como $\hat{C_n}(x) = \{y :|y - \hat{f_n}(x)| \leq \hat{q_n} \}$
 
 O en otras palabras:
@@ -94,7 +75,11 @@ $$\hat{C_n}(x) = [\hat{f}_n(x) - \hat{q}_n,\hat{f}_n(x) + \hat{q}_n]$$
 Este método es aproximadamente válido para muestras grandes, bajo la condicion de que $\hat{f_n}(x)$ sea los suficientemente preciso, es decir, que $\hat{q_n}$ este cerca del cuantil $1- \alpha$ de $R_i$.
 Un problema de este método es que los intervalos de predicción pueden presentar una considerable subcobertura, dado que se estan empleando los residuos dentro de la muestra. Para evitar esto, se plantea la metodología de los intervalos de predicción conformales
 
-
+Ejemplo práctico: Supongamos que tenemos un conjunto de datos $X= (1,2,3,4) \ y \ Y=(2,4,6,8)$, donde ajustamos un modelo lineal simple $\hat{f}(x) = 1 + x$, y obtenemos  $\hat{f}(x) = (2,3,4,5)$ y los residuos $e_i = (0,1,2,3)$
+Luego calculamos el cuantil con cobertura $1 - \alpha$, para ello calculamos $\hat{q_n} = [(0.8) (\ 5)] = 4$
+Ordenamos los residuos de menos a mayor y vemos que el residuo $e_{4} = 3$.
+Luego nos contruimos un intervalo de predicción para $X_{n+1} = 5$ $\hat{f(5)} = 6$.
+Por lo que el intervalo conformal con cobertura 0.8 es : $\hat{C(5)} = [6  - 3, 6 + 3] = [3,9]$
 
 
 ## Separación de la muestra de intervalos de prediccón 
@@ -112,7 +97,7 @@ Tiene sentido pensar que la intersección de ambos es vacia, $T_1 \cap  T_2 = \e
 
 En el  siguiente paso, entrenamos el predictor puntual usando los datos del conjunto de entrenamiento propiamente dicho $(X_i,Y_i)$ donde $i \in T_1$ y lo denotamos como $\hat{f}_{n_1}$.Luego, vemos los resudios en el conjunto de calibración: $e_i = | Y_1 - \hat{f}_{n_1}| \ i \in T_2$
 
-Por lo que llegamos a que el residuo mas chico del cuantil conformal es el siguiente: $\hat{q}_{n_2} =[(1 - \alpha)(n_2 +1)] \ e_i \ i \in e_2$. Aquí se calcula un cuantil de nivel de cobertura  $1 - \alpha$ de los residuos $e_i$, para construir un **intervalo de predicción** que tenga cobertura aproximada $1- \alpha$, es decir, primero se ordenan los residuos $e_i$ del conjunto $T_2$ de menor a mayor.
+Por lo que llegamos a que el residuo mas chico del cuantil conformal es el siguiente: $\hat{q}_{n_2} =[(1 - \alpha)(n_2 +1)] \ R_i \ i \in R_2$. Aquí se calcula un cuantil de nivel de cobertura  $1 - \alpha$ de los residuos $R_i$, para construir un **intervalo de predicción** que tenga cobertura aproximada $1- \alpha$, es decir, primero se ordenan los residuos $R_i$ del conjunto $T_2$ de menor a mayor.
 Luego, se busca el cuantil empírico de orden $(1 - \alpha)$, es decir, el residuo en lal posición $[(1- \alpha)(n_2 +1)]$ donde $n_2$ es el tamaño del conjunto de calibración.
 Este valor se denota como: $\hat{q}_{n_2}$ y se utiliza para crear un intervalo de predicción al rededor de la estimación puntual, $C(x) = [\hat{f}_{n_1}(x) - \hat{q}_{n_2}, \hat{f_{n_1}}(x) +\hat{q}_{n_2}]$
 
@@ -122,9 +107,38 @@ $$P(y_{n+1} \in \hat{C}_{n}(X_{n+1}) | (X_i,Y_i) i  \in T_1) \in [1 - \alpha , 1
 Finalmente:
 
 $$Y_{n+1} \leq \hat{C_n}(X_n+1)\Leftrightarrow e_{n+1} \leq \hat{q}_{n2} \Leftrightarrow e_{n+1} \leq [(1 - \alpha)(n_2+1)$$
+Esto ocurre con probabilidad al menos $1 - \alpha$ y a al menos $1 - \alpha  + \ \frac{1}{n+1}$
+
+## Full conformal prediciton 
+
+Ahora hacemos algo distinto a lo que haciamos hasta ahora, entrenamos nuestro algoritmo de predicción con los datos $(X_1,Y_1),...,(X_n,Y_n),(x.y)$. Es decir, usamos un conjunto de entrenamiento extendido, con $n + 1$ puntos (incluyendo el nuevo par (x,y)).
+
+A partir de este conjunto, obtenemos un predictor punutal $\hat{f}_n(x,y)$
+
+Luego, definimos los residuos como:
+
+\- para i = 1,....,n
+$$R_{i}^{(x,y)} = |Y_i - \hat{f}_n(x,y)(X_i)|$$
+\- Para el nuevo punto de prueba:
+$$R_{n+1}^{(x,y)} = |y - \hat{f_{n}}(x,y)(x)|$$
+Finalmente, definimos el conjunto conformal como:
+
+$$\hat{C_n}(x) = \{ y \in R_{n+1}^{(x,y)} \leq [(1- \alpha)(n+1)] - ésimo\ menor\ de\ los\ R_{1}^{((x,y))},...,R_{n}^{x,y}\}$$
+Es decir, para cada valor candidato y, se crea un cojunto de entrenamiento aumentado:
+
+$$\{(X_1,Y_1),....,(X_n,Y_n),(X_{n+1},y)\}$$
+Luego se evalúa si el residuo del nuevo punto de la prueba $R_{n+1}^{(x,y)}$  está entre los más pequeños de todos los residuos generados con ese conjunto extendido. Si cumple la condición, entonces ese y pertenece al intervalo de predicción.
+
 
 
 ## Intervalos predicitivos vía Jacknife 
 
 Aquí la idea es separar el conjunto en entrenamiento y testeo, dejando una observación aparte para testear, es decir, entrenas $\hat{f}_{-i}$ dejando fuera la observación i, luego se
 calculan los residuos
+
+
+
+
+
+
+
