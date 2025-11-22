@@ -133,8 +133,10 @@ Luego se evalúa si el residuo del nuevo punto de la prueba $R_{n+1}^{(x,y)}$  e
 
 ## Intervalos predicitivos vía Jacknife 
 
-Aquí la idea es separar el conjunto en entrenamiento y testeo, dejando una observación aparte para testear, es decir, entrenas $\hat{f}_{-i}$ dejando fuera la observación i, luego se
-calculan los residuos
+Este algoritmo es bastante similar al Leave One Out (LOOV). Aquí la idea es separar el conjunto en entrenamiento y testeo, dejando una observación aparte para testear, es decir, entrenas $\hat{f}_{-i}$ dejando fuera la observación i, luego se calculan el residuo confromal $R_{i}$  sin esa observación. 
+Luego se ordenan los residuos $R_i$ y se calcula el k-ésimo valor más chico, donde $k = [n(1-\alpha)]$ , ese valor q vendria a ser la mitad del ancho del intervalo.
+Por último, se entrena $\hat{f}$ con todos los datos y se devuelve el intervalo de predicción conformal para un nuevo punto $x \in R^d$.
+$$C_{jack}(x) = [\hat{f}(x) - \hat{d} , \hat{f}(x) + \hat{d}]$$
 
 
 
