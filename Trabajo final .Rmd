@@ -52,7 +52,6 @@ Siempre tendrá cobertura exacta $1 - \alpha$, lo cual es, lo que queremos lugra
 
 La pregunta real sería, podriamos lograr la ecuación (1) en muestras finitas sin asumir ninguna distribución P, haciendo algo "no trivial"?. En particular, queremos que nuestra estrategia se adapte a la dificultad del problema, en el siguiente sentido: cuanto más fácil sea predecir $Y_{n+1}$ a partir de las variables explicativas $X_{n+1}$, mas chico nos gustaría que fuera el conjunto $\hat{C_{n}}(X_{n+1})$
 
-![](cuantil.png)
 
 Supongamos que nuestro objetivo inicial es encontrar una cola de intervalo de predicción. $\hat{C}_n= (-\infty,\hat{q}_n]$ 
 
@@ -70,6 +69,7 @@ Y[(1- \alpha)(n +1)] \ si \  [(1 - \alpha)(n+1) \leq n, \\
 $$
 Aquí $Y_{(1)},Y_{(2)},...Y_{n}$ son los estadisticos de orden de la muestra $Y_{(1)} \leq Y_{(2)} \leq..., Y_{(n)}$. Se verifica la cobertura en muestra finita de la ecuación (1) debido a la independencia de las variables.Por otra parte  el rango de $Y_{n+1}$ se distribuye uniforme en el conjunto $\{1,...,n+1\}$, es decir, la predicción $Y_{n+1}$ tiene probabildiad $\frac{1}{n+1}$ de caer en cualquier posición del conjunto ordenado.
 
+![](cuantil.png)
 
 ## Método de Naive  
 Veamos la primera idea clave sobre regresion, donde observamos ambos $X_i$ and $Y_i \ \in R \ i=1,....,n$, y queremos un conjunto de predicción para $Y_{n+1}$ basado en $X_{n+1}$. Supongamos que $\hat{f_n}$ es cualquier predictor puntual, entrenado en $(X_i,Y_i)$, $i =1,...,n$.
@@ -128,7 +128,7 @@ Esto ocurre con probabilidad al menos $1 - \alpha$ y a al menos $1 - \alpha  + \
 
 ## Full conformal prediciton 
 
-Ahora hacemos algo distinto a lo que haciamos hasta ahora, entrenamos nuestro algoritmo de predicción con los datos $(X_1,Y_1),...,(X_n,Y_n),(x.y)$. Es decir, usamos un conjunto de entrenamiento extendido, con $n + 1$ puntos (incluyendo el nuevo par (x,y)).
+Ahora hacemos algo distinto a lo que haciamos hasta ahora, entrenamos nuestro algoritmo de predicción con los datos $(X_1,Y_1),...,(X_n,Y_n),(x,y)$. Es decir, usamos un conjunto de entrenamiento extendido, con $n + 1$ puntos (incluyendo el nuevo par (x,y)).
 
 A partir de este conjunto, obtenemos un predictor punutal $\hat{f}_n(x,y)$
 
