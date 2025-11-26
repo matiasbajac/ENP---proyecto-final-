@@ -1,0 +1,261 @@
+---
+title : Inferencia Conformal
+subtitle : Estadística no paramétrica 2025
+author : Matías Bajac y Jimena Padín 
+date : 27 de Noviembre 2025
+output : 
+  xaringan::moon_reader:
+   css : ["xaringan-themer.css","custom.css"]   
+   lib_dir : libs
+   includes:
+   nature :
+     ratio : "16:9"
+     highlightStyle: github
+     slideNumberFormat: '%current%'
+     highlightLines: true
+     countIncrementalSlides: false
+
+---
+
+```{r setup, include = F , warning = F }
+if(!require(pacman)) {
+  install.packages("pacman")
+}
+
+library(xaringanthemer)
+
+
+pacman::p_load(
+  RefManageR
+)
+
+#Libreria car 
+pacman::p_load_gh(
+  "gadenbuie/xaringanExtra"
+)
+# Configuración del tema Xaringan:
+style_duo_accent(
+  primary_color = "#010788",
+  secondary_color = "#01B5FE",
+  header_font_google = google_font("Titillium Web", "600"),
+   text_font_google   = google_font("Crimson Pro", "300", "300i"),
+   code_font_google   = google_font("IBM Plex Mono"),
+   base_font_size = "20px",
+   text_font_size = "1rem",
+   code_font_size = "0.6rem",
+   code_inline_font_size = "1.2em",
+   footnote_font_size = "0.6em",
+   header_h1_font_size = "1.7rem",
+   header_h2_font_size = "1.50rem",
+   header_h3_font_size = "1.2rem"
+)
+
+xaringanExtra::use_xaringan_extra(
+  c(
+    "tile_view",
+    "panelset",
+    "progress_bar"
+  )
+)
+
+
+xaringanExtra::style_panelset_tabs(
+  active_foreground = "#0051BA",
+  hover_foreground = "#d22",
+  font_family = "Roboto"
+)
+
+xaringanExtra::use_banner(
+  bottom_left = "bit.ly/my-awesome-talk",
+  exclude = "title-slide"
+)
+
+xaringanExtra::style_banner(
+  text_color = "#1874CD",
+  background_color = "#F0F8FF"
+)
+
+
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  warning = F, 
+  echo = F ,
+  out.width = "450px",
+  dpi = 200, 
+  fig.retina =2
+)
+
+
+if(!require(pacman)) {
+  install.packages("pacman")
+}
+
+
+
+
+options(kableExtra.latex.load_packages = FALSE)
+```
+
+
+class: header_background
+
+# Guía
+
+- ### Introducción a la inferencia predictiva
+
+- ### Método Naive para la construcción de intervalos de predicción
+
+- ### Intervalos de predicción conformales con muestras separadas 
+
+- ### Intervalos de predicción conformales
+
+- ### Intervalos de predicción mediante Jackknife
+
+---
+
+class: header_background
+
+# Inferencia predictiva para regresión con distribución libre
+
+## El trabajo fue basado en: 
+
+.center[
+Ryan Tibshirani (2023)
+Conformal Prediction.Advanced Topics in Statistical Learning.
+]
+
+---
+
+
+class: header_background
+
+# Inferencia predictiva
+
+
+El autor presenta un marco general para  cuantificar la incertidumbre en problemas de predicción sin importar supuestos paramétricos sobre la distribución P de los datos. la idea central consiste en transformar cualquier predictor puntual en un predictor para conjuntos que garantice conbertura válida en muestras finitas 
+Consideremos el problema $(X_i,Y_i) \sim P$ iid en  donde cada $X_{i} \in \mathbb{R}^{d} \  \ Y_{i} \in \mathbb{R}$, y queremos predecir $Y_{n+1}$. 
+Dado una probabilidad  $\alpha$ llamado tasa de no cobertura, queremos encontrar una banda de predicción para $Y_{n+1}$
+
+
+## Intervalo conformal
+
+
+$$P\left(Y_{n+1} \in \hat{C} \left(X_{n+1}\right) \right) \geq 1-\alpha$$
+
+
+Asumiendo que la siguiente observación proviene de la misma distribución $P$ e independientes, con la que fue ajustado el modelo.
+
+## Una solución trivial 
+
+Construimos el conjunto de predicción de la siguiente manera 
+
+$$\hat C_n(X_{n+1}) =
+\begin{cases}
+\mathcal{Y} & \text{con probabilidad } 1-\alpha, \\
+\varnothing & \text{con probabilidad } \alpha .
+\end{cases}$$
+
+Podemos lograr que $P(y_{n+1} \in \hat{C(X_{n+1})} \geq 1 - \alpha$ en muestras finitas haciendo algo no trivial?
+
+
+
+---
+
+
+
+
+class: header_background
+
+# Método Naive
+
+Consideremos un problema de regresión, donde el predictor  $\hat{f}_n(x)$ predice el valor de y que esperamos observar en x. 
+
+Nuestro objetivo será encontrar los resiudos y computar $\hat{q}$
+
+Definimos los resiudos de entrenamiento 
+
+$$R_i =|Y_i -\hat{f}_n(X_i)|, \ i=1,....,n$$
+$$\hat{q} = [(1 - \alpha)(n+1)] \ el \ más \ chico\  de\ R_i,....,R_n$$
+Entonces tenemos:
+
+$$\hat{C_n}(x) = \{y :|y - \hat{f_n}(x)| \leq \hat{q_n} \}$$
+O en otras palabras:
+
+$$\hat{C_n}(x) = [\hat{f}_n(x) - \hat{q}_n,\hat{f}_n(x) + \hat{q}_n]$$
+
+---
+
+class: header_background
+
+# Método Naive
+
+
+
+
+## Cuando funciona bien
+
+- Este método es aproximadamente válido para muestras grandes, bajo la condición que $\hat{f_n(x)}$ sea lo suficientemente preciso.
+- Bajo condiciones de regularidad tanto para la distribución $P$ y para la función de regresión $\hat{f_n}$.
+## Desventajas
+- Este método usa los mismos datos para entrenar modelo y para  calcular los resiudos, por lo que se puede generar overfitting
+
+---
+
+class: header_background
+
+# Split Conformal
+
+
+### Solución
+Para evitar esta subcobertura se presenta la metodología de separación de la muestra 
+**Intervalos de predicción conformales**
+
+
+Se divide los datos en 2 conjuntos disjuntos, uno para entrenar el modelo y otro subconjunto para predicción (conjunto de calibración).
+
+- $T_1$ ss el conjunto de entrenamiento ($n_1$ puntos de la muestra)
+- $T_2$ es el conjunto de testeo ($n_2$ puntos de la muestra)
+
+-Ajustamos $\hat{f}$ usando el conjunto de entrenamiento $T_1$ y computamos los residuos usando los datos de calibración $T_2$
+
+- Encontramos el cuantil 
+
+$$\hat{q} = [(1 - \alpha)(n_2 +1)] \ el \ más  \ chico  \ r_i, i \in T_2$$
+- Construimos el intervalo de predicción conformal 
+
+$$C(x) = [\hat{f}_{n_1}(x) - \hat{q}_{n_2}, \hat{f_{n_1}}(x) +\hat{q}_{n_2}]$$
+
+
+---
+
+class: header_background
+
+## Full conformal prediction 
+
+Buscamos una forma de lograr un nivel de cobertura sin separar los datos, para eso entrenamos nuestro algoritmo de predicción con los datos $(X_1,Y_1),...,(X_n,Y_n),(x,y)$. Es decir, usamos un conjunto de entrenamiento extendido con n + 1 puntos incluyendo el nuevo par (x,y) 
+
+A partir de este conjunto, obtenemos un predictor punutal $\hat{f}_n(x,y)$
+
+Luego, definimos los residuos como:
+
+- para i = 1,....,n
+$$R_{i}^{(x,y)} = |Y_i - \hat{f}_n(x,y)(X_i)|$$
+- Para el nuevo punto de prueba:
+$$R_{n+1}^{(x,y)} = |y - \hat{f_{n}}(x,y)(x)|$$
+
+Finalmente, definimos el conjunto conformal como:
+
+$$\hat{C_n}(x) = \{ y \in R_{n+1}^{(x,y)} \leq [(1- \alpha)(n+1)] - ésimo\ menor\ de\ los\ R_{1}^{((x,y))},...,R_{n}^{x,y}\}$$
+
+
+---
+
+
+Es decir, para cada valor candidato y, se crea un cojunto de entrenamiento aumentado:
+
+$$\{(X_1,Y_1),....,(X_n,Y_n),(X_{n+1},y)\}$$
+Luego se evalúa si el residuo del nuevo punto de la prueba $R_{n+1}^{(x,y)}$  está entre los más pequeños de todos los residuos generados con ese conjunto extendido. Si cumple la condición, entonces ese y pertenece al intervalo de predicción.
+
+
+
+
