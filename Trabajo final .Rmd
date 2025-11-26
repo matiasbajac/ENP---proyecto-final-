@@ -10,6 +10,17 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(tidymodels)
+library(randomForest)
+library(devtools)
+
+
+
+colores <- c("#003f5c", "#7a5195", "#ef5
+             675", "#ffa600")
+```
+
 ## Introducción 
 
 En el articulo de Ryan Tibsharini (2023) sobre inferencia conformal, el autor presenta un marco general para cuantificar la incertidumbre en problemas de predicción sin importar supuestos paramétricos sobre la distribución P de los datos. La idea central consiste en transformar cualquier predictor puntual en un predictor para conjuntos que garantice coberturta válida en  muestras finitas.
@@ -40,6 +51,8 @@ $$
 Siempre tendrá cobertura exacta $1 - \alpha$, lo cual es, lo que queremos lugrar con la ecuación (1).
 
 La pregunta real sería, podriamos lograr la ecuación (1) en muestras finitas sin asumir ninguna distribución P, haciendo algo "no trivial"?. En particular, queremos que nuestra estrategia se adapte a la dificultad del problema, en el siguiente sentido: cuanto más fácil sea predecir $Y_{n+1}$ a partir de las variables explicativas $X_{n+1}$, mas chico nos gustaría que fuera el conjunto $\hat{C_{n}}(X_{n+1})$
+
+![](cuantil.png)
 
 Supongamos que nuestro objetivo inicial es encontrar una cola de intervalo de predicción. $\hat{C}_n= (-\infty,\hat{q}_n]$ 
 
@@ -84,7 +97,7 @@ Por lo que el intervalo conformal con cobertura 0.8 es : $\hat{C(5)} = [6  - 3, 
 
 ## Separación de la muestra de intervalos de prediccón 
 
-En esta priemra parte de esta sección, nos enfocaremos en la parte de  regresion, es decir, que Y pertenece a todos los reales/
+En esta priemra parte de esta sección, nos enfocaremos en la parte de  regresion, es decir, que Y pertenece a todos los reales.
 
 
 En concreto, dividimos el conjunto de entrenamiento en 2: 
@@ -95,15 +108,19 @@ En concreto, dividimos el conjunto de entrenamiento en 2:
 Tiene sentido pensar que la intersección de ambos es vacia, $T_1 \cap  T_2 = \emptyset$ y $T_1 \cup T_2 = \{1,2,...,n\}$, sea $n_1 = |T_1| \  y\ \ n_2 =|T_2|$
 
 
-En el  siguiente paso, entrenamos el predictor puntual usando los datos del conjunto de entrenamiento propiamente dicho $(X_i,Y_i)$ donde $i \in T_1$ y lo denotamos como $\hat{f}_{n_1}$.Luego, vemos los resudios en el conjunto de calibración: $e_i = | Y_1 - \hat{f}_{n_1}| \ i \in T_2$
+En el siguiente paso, entrenamos el predictor puntual usando los datos del conjunto de entrenamiento propiamente dicho $(X_i,Y_i)$ donde $i \in T_1$ y lo denotamos como $\hat{f}_{n_1}$.Luego, vemos los resudios en el conjunto de calibración: $e_i = | Y_1 - \hat{f}_{n_1}| \ i \in T_2$
 
 Por lo que llegamos a que el residuo mas chico del cuantil conformal es el siguiente: $\hat{q}_{n_2} =[(1 - \alpha)(n_2 +1)] \ R_i \ i \in R_2$. Aquí se calcula un cuantil de nivel de cobertura  $1 - \alpha$ de los residuos $R_i$, para construir un **intervalo de predicción** que tenga cobertura aproximada $1- \alpha$, es decir, primero se ordenan los residuos $R_i$ del conjunto $T_2$ de menor a mayor.
-Luego, se busca el cuantil empírico de orden $(1 - \alpha)$, es decir, el residuo en lal posición $[(1- \alpha)(n_2 +1)]$ donde $n_2$ es el tamaño del conjunto de calibración.
+Luego, se busca el cuantil empírico de orden $(1 - \alpha)$, es decir, el residuo en la posición $[(1- \alpha)(n_2 +1)]$ donde $n_2$ es el tamaño del conjunto de calibración.
 Este valor se denota como: $\hat{q}_{n_2}$ y se utiliza para crear un intervalo de predicción al rededor de la estimación puntual, $C(x) = [\hat{f}_{n_1}(x) - \hat{q}_{n_2}, \hat{f_{n_1}}(x) +\hat{q}_{n_2}]$
 
 La mayor garantía que podemos obtener es que: 
 
 $$P(y_{n+1} \in \hat{C}_{n}(X_{n+1}) | (X_i,Y_i) i  \in T_1) \in [1 - \alpha , 1 - \alpha + \frac{1}{n_2 +1}]$$
+Esto es lo mismo a decir que para cualquier $\alpha$, n y algoritmo, el valor predicho estara comprendido entre 
+$$1 - \alpha\leq  P(Y_{n+1} \in \hat{C}(_{X_{n+1})}  \leq 1 - \alpha + \frac{1}{1+n_2} )$$
+
+
 Finalmente:
 
 $$Y_{n+1} \leq \hat{C_n}(X_n+1)\Leftrightarrow e_{n+1} \leq \hat{q}_{n2} \Leftrightarrow e_{n+1} \leq [(1 - \alpha)(n_2+1)$$
@@ -138,9 +155,346 @@ Luego se ordenan los residuos $R_i$ y se calcula el k-ésimo valor más chico, d
 Por último, se entrena $\hat{f}$ con todos los datos y se devuelve el intervalo de predicción conformal para un nuevo punto $x \in R^d$.
 $$C_{jack}(x) = [\hat{f}(x) - \hat{d} , \hat{f}(x) + \hat{d}]$$
 
+## Simulaciones 
+
+Se simulan 5000 datos provenientes de mezcla de normales,  la cual podemos  observar que hay una relacion lineal entre Y y X. 
+
+```{r}
+set.seed(2025)
+
+n <- 5000
+
+W <- rnorm(n)
+X <- rnorm(n)
+
+Y <- X + W
+
+datos = data.frame(X,Y)
+
+ datos %>%  ggplot() + geom_point(aes(x=X,y=Y),alpha=0.3)
+```
+
+Hacemos estimaciones para una regresion lineal simple y un random forest (no paramétrico) y nos guardamos los resiudos, para ello se utiliza el paquete  tidymodels.
+
+Modelo lineal simple
+```{r}
+lm_wf =workflow() %>% 
+  add_model(parsnip::linear_reg() %>% set_engine("lm")) %>% 
+  add_formula(Y ~ X)
+
+lm_fit <- fit(lm_wf, data = datos)
+
+residuos= augment(lm_fit,new_data=datos) %>% 
+  select(.resid)
+```
+Random Forest
+```{r}
+rf_spec <- rand_forest(mode = "regression") %>%
+  set_engine("ranger")
+
+rf_wf <- workflow() %>%
+  add_model(rf_spec) %>%
+  add_formula(Y ~ X)
+
+rf_fit <- fit(rf_wf, data = datos)
+
+pred_rf <- predict(rf_fit, new_data = datos) %>%
+  pull(.pred)
+
+residuos_rf <- datos$Y - pred_rf
+```
+
+Vemos los histogramas de los resiudos tanto para un modelo de regresión lineal como también para el de random forest, podemos observar que los resiudos en valor absoluto del modelo lineal tiene mayor dispersion que el del random forest, esto puede influir a la hora de hacer intervalos conformales, ya que estos dependen fuertemente del estimador.
+
+```{r}
+residuos_abs = abs(residuos$.resid)
+residuos_rf_abs = abs(residuos_rf)
+par(mfrow = c(1,2))
+hist(residuos_abs)
+hist(residuos_rf_abs)
+
+```
+
+
+
+## Metodo Naive 
+
+```{r}
+Xnew = seq(-4,4,.25) 
+
+muHat_lm <- predict(
+  lm_fit,
+  new_data = data.frame(X = Xnew)
+)
+
+
+muHat_vector <- muHat_lm$.pred
+residuosVec = residuos$.resid
+
+C.X_lm_lwr_975 <- c(
+  muHat_vector - quantile(residuosVec, .975)
+)
+
+C.X_lm_uppr_975 <- c(
+  muHat_vector + quantile(residuosVec, .975)
+)
+
+
+C.X_lm_lwr_90 <- c(
+  muHat_vector - quantile(residuosVec, .90)
+)
+
+C.X_lm_uppr_90 <- c(
+  muHat_vector + quantile(residuosVec, .90)
+)
+
+
+## Random forest usando tidymodels 
+
+rf_spec <- rand_forest(mode = "regression") %>%
+  set_engine("ranger")
+
+rf_wf <- workflow() %>%
+  add_model(rf_spec) %>%
+  add_formula(Y ~ X)
+
+rf_fit <- fit(rf_wf, data = datos)
+
+pred_rf <- predict(rf_fit, new_data = datos) %>%
+  pull(.pred)
+
+residuos_rf <- datos$Y - pred_rf
+
+muHat_rf <- predict(
+  rf_fit,
+  new_data = data.frame(X = Xnew)
+)
+
+
+muHat_vector_rf <- muHat_rf$.pred
+
+
+C.X_rf_lwr <- function(alpha) {
+  muHat_rf - quantile(residuos_rf, probs = alpha)
+}
+
+C.X_rf_lwr_975 = C.X_rf_lwr(0.975)
+C.X_rf_lwr90 = C.X_rf_lwr(0.90)
+
+C.X_rf_lwr975 =C.X_rf_lwr_975$.pred
+C.X_rf_lwr90=C.X_rf_lwr90$.pred
+
+C.X_rf_uppr <- function(alpha)(
+  muHat_rf + quantile(residuos_rf, probs=alpha)
+)
+C.X_rf_uppr_975 = C.X_rf_uppr(0.975)
+C.X_rf_uppr90 = C.X_rf_uppr(0.90)
+
+C.X_rf_uppr975 =C.X_rf_uppr_975$.pred
+C.X_rf_uppr90=C.X_rf_uppr90$.pred
+
+resultados_conf_naive <- data.frame(
+  Xnew,
+  muHat_vector,
+  muHat_vector_rf,
+  C.X_lm_lwr_975,
+  C.X_lm_uppr_975,
+  C.X_lm_lwr_90,
+  C.X_lm_uppr_90,
+   C.X_rf_lwr975,
+  C.X_rf_uppr975,
+  C.X_rf_lwr90,
+  C.X_rf_uppr90
+)
+
+
+ggplot(resultados_conf_naive, aes(x = Xnew)) +
+  geom_point(data = datos, aes(x = X, y = Y), color = "black",alpha=0.3) +  # puntos originales
+  
+  # Modelo Lineal
+  geom_line(aes(y = muHat_vector), color = "red", size = 0.5) + 
+  geom_line(aes(y = C.X_lm_lwr_975), color = colores[1], linetype = "dashed",size=1.2) +
+  geom_line(aes(y = C.X_lm_uppr_975), color = colores[1], linetype = "dashed",size=1.2) +
+    geom_line(aes(y = C.X_lm_lwr_90), color = colores[2], linetype = "dashed",size=1.2) +
+  geom_line(aes(y = C.X_lm_uppr_90), color = colores[2], linetype = "dashed",size=1.2)  + labs(title=" Regresión lineal simple para intervalos de predicción Naive")
+  
+  
+  ggplot(resultados_conf_naive, aes(x = Xnew)) +
+    geom_point(data = datos, aes(x = X, y = Y), color = "black",alpha=0.3) +
+  # Modelo Random Forest
+  geom_line(aes(y = muHat_vector_rf), color = "blue",size = 0.5) +
+  geom_line(aes(y = C.X_rf_lwr975), linetype = "dashed",color = "gray30" ,size=1.2)+
+  geom_line(aes(y = C.X_rf_uppr975), color = "gray30", linetype = "dashed",size=1.2) +
+    geom_line(aes(y = C.X_rf_lwr90), linetype = "dashed",color = colores[4] ,size=1.2)+
+  geom_line(aes(y = C.X_rf_uppr90), color = colores[4], linetype = "dashed",size=1.2) +
+  
+  
+  labs(title = " Random Forest (Naive Prediction Bands)",
+        x = "X",
+       y = "Y",
+       ) 
+
+```
+Como era de esperarse, la banda de confianza conformal para Random Forest es mas angosto que el del Modelo Lineal para ambas coberturas de predicción de un nuevo X.
+
+
+
+##Split Conformal 
+
+El método de intervalos conformales  split es mas eficiente computacionalmente. 
+
+
+Modelo Lineal 
+```{r}
+
+splitConfPredict <- function(Xin) {
+  
+
+  nData <- nrow(datos)
+datos$index <- 1:nData
+datos$split <- 1
+datos$split[sample(datos$index, floor(nrow(datos) / 2), replace = F)] <- 2
+  fitlm.spl <- lm(Y ~ X, data = subset(datos, split == 1))
+  resOut <- abs(
+    subset(datos, split == 2)$Y -
+      predict(fitlm.spl, newdata = subset(datos, split == 2))
+  )
+  kOut <- ceiling(((nData / 2) + 1) * (.975))
+  resUse <- resOut[order(resOut)][kOut]
+  
+  Y.hat <- predict(fitlm.spl, newdata = data.frame(X = Xin))
+  C.split <- c(Y.hat - resUse, Y.hat, Y.hat + resUse)
+  return(C.split)
+}
+
+# Intervalo split
+
+Csplit <- t(sapply(Xnew, FUN = splitConfPredict))
+
+
+
+# Resultados
+
+resultados_conf_split <- data.frame(
+  Xnew,
+  muHat_vector, # La estimacion puntual es la misma
+  Csplit_lwr = Csplit[, 1],
+  Csplit_uppr = Csplit[, 3],
+  Cxa_lm_lwr =   C.X_lm_lwr_975,
+  Cxa_lm_uppr = C.X_lm_uppr_975
+)
+
+
+
+```
+
+
+
+
+```{r,fig.cap="Intervalo de predición conformal Naive (rojo) vs Split (azul) para un modelo de regresion Lineal"}
+ggplot(resultados_conf_split , aes(x = Xnew)) +
+  geom_point(data = datos, aes(x = X, y = Y), color = "black") +  # puntos originales
+  
+  # Modelo Lineal intervalo naive 
+  geom_line(aes(y = muHat_vector), color = "red", size = 1.2) + 
+  geom_line(aes(y = C.X_lm_lwr_975), color = "red", linetype = "dashed") +
+  geom_line(aes(y = C.X_lm_uppr_975), color = "red", linetype = "dashed") +
+  
+  # intervalo conformal split
+  geom_line(aes(y = Csplit_lwr), color = "blue", size = 1.2,linetype = "dashed") + 
+  geom_line(aes(y = Csplit_uppr ), color = "blue", linetype = "dashed") +
+
+  
+  labs(title = "Comparación: Regresión Lineal, intervalo conformal naive vs intervalo split",
+       x = "X",
+       y = "Y")
+
+```
 
 
 
 
 
+
+
+Lo mismo para el modelo de regresión Random Forest 
+
+```{r}
+splitConfPredict <- function(Xin) {
+  
+
+  nData <- nrow(datos)
+datos$index <- 1:nData
+datos$split <- 1
+datos$split[sample(datos$index, floor(nrow(datos) / 2), replace = F)] <- 2
+  fitlm.spl <- randomForest(Y ~ X, data = subset(datos, split == 1))
+  resOut <- abs(
+    subset(datos, split == 2)$Y -
+      predict(fitlm.spl, newdata = subset(datos, split == 2))
+  )
+  kOut <- ceiling(((nData / 2) + 1) * (.975))
+  resUse <- resOut[order(resOut)][kOut]
+  
+  Y.hat <- predict(fitlm.spl, newdata = data.frame(X = Xin))
+  C.split <- c(Y.hat - resUse, Y.hat, Y.hat + resUse)
+  return(C.split)
+}
+
+# Intervalo split
+
+Csplit <- t(sapply(Xnew, FUN = splitConfPredict))
+
+# Resultados
+
+resultados_conf_split <- data.frame(
+  Xnew,
+  muHat_vector_rf, # La estimacion puntual es la misma
+  Csplit_lwr = Csplit[, 1],
+  Csplit_uppr = Csplit[, 3],
+  Cxa_rf_lwr =   C.X_rf_lwr975,
+  Cxa_rf_uppr = C.X_rf_uppr975
+)
+
+```
+
+```{r,fig.cap = "Intervalos de predicción conformal naive (rojo) vs split (azul) para un modelo Random Forest"}
+
+ggplot(resultados_conf_split , aes(x = Xnew)) +
+  geom_point(data = datos, aes(x = X, y = Y), color = "black") +  # puntos originales
+  
+  # Modelo Lineal intervalo naive 
+  geom_line(aes(y = muHat_vector_rf), color = "red", size = 1.2) + 
+  geom_line(aes(y = Cxa_rf_lwr), color = "red", linetype = "dashed") +
+  geom_line(aes(y = Cxa_rf_uppr), color = "red", linetype = "dashed") +
+  
+  # intervalo conformal split
+  geom_line(aes(y = Csplit_lwr), color = "blue", size = 1.2,linetype = "dashed") + 
+  geom_line(aes(y = Csplit_uppr ), color = "blue", linetype = "dashed") 
+
+  
+
+```
+
+## Metrica de evaluacioón 
+
+```{r}
+resultados_conf_naive
+
+mean(if_else(resultados_conf_naive$Xnew >= resultados_conf_naive$C.X_lm_lwr_975 &  resultados_conf_naive$Xnew <= resultados_conf_naive$C.X_lm_uppr_975,1,0)) 
+
+mean(if_else(resultados_conf_naive$Xnew >= resultados_conf_naive$C.X_rf_lwr975 & resultados_conf_naive$Xnew<= resultados_conf_naive$C.X_rf_uppr975,1,0))
+
+```
+
+## para split conformal 
+
+```{r}
+
+```
+
+
+## Conclusiones:
+
+Con este articulo se ha visto la metodología de los distintos métodos para cuantificar los intervalos de confianza, estos algoritmos requieren asumir que los datos tienen independencia entre sí para cualquier modelo de regresión,pero sin suponer ninguna distribución en los datos ni tampoco una distrbución de probabilidad para los residuos.Esto representa una ventaja importante en modelos donde la construcción de intervalos de predicción no es evidente, ya que en esos casos suele recurrirse al bootstrap para obtener aproximaciones, como ocurre en los métodos de ensamble, o bien se depende de supuestos fuertes sobre la distribución de los datos basados en resultados asintóticos. 
+En cuanto a la etapa de simulación de mezcla de normales, vimos los intervalos de predicción conformal para un modelo de regersion lineal y un random forest, siendo que el método de separacion de muestras es mas eficiente computacionalmente y en particular, para el random forest bajo el metodo de split, los intervalos son mas amplios que con el método Naive, esto es porque el método de split Conformal  construye los intervalos usando una muestra de calibración separada, por lo que no reutiliza los datos de entrenamiento. Esto garantiza cobertura válida en muestras finitas bajo independencia de los datos.
 
