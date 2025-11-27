@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Inferencia Conformal</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Matías Bajac y Jimena Padín" />
+    <meta name="date" content="2025-01-01" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <link href="libs/xaringanExtra-banner/banner.css" rel="stylesheet" />
+    <script src="libs/xaringanExtra-banner/banner.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+    <link rel="stylesheet" href="custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Inferencia Conformal
+]
+.subtitle[
+## Estadística no paramétrica
+]
+.author[
+### Matías Bajac y Jimena Padín
+]
+.date[
+### 2025
+]
+
+---
+
+
+
+
+
+class: header_background
+
+# Guía
+
+- ### Introducción a la inferencia predictiva
+
+- ### Método Naive para la construcción de intervalos de predicción
+
+- ### Intervalos de predicción conformales con muestras separadas 
+
+- ### Intervalos de predicción conformales
+
+- ### Intervalos de predicción mediante Jackknife
+
+- ### Simulación en R 
+---
+
+class: header_background
+
+# Inferencia predictiva para regresión con distribución libre
+
+## El trabajo fue basado en: 
+
+.center[
+&lt;span style="font-size: 1.2em;"&gt;
+Ryan Tibshirani (2023)&lt;br&gt;
+Conformal Prediction. Advanced Topics in Statistical Learning.
+&lt;/span&gt;
+]
+
+---
+
+
+class: header_background
+
+# Inferencia predictiva
+
+&lt;span style="font-size: 1.1em;"&gt;
+El autor presenta un marco general para  cuantificar la incertidumbre en problemas de predicción sin importar supuestos paramétricos sobre la distribución P de los datos. la idea central consiste en transformar cualquier predictor puntual en un predictor para conjuntos que garantice cobertura válida en muestras finitas 
+Consideremos el problema `\((X_i,Y_i) \sim P\)` iid en  donde cada `\(X_{i} \in \mathbb{R}^{d} \  \ Y_{i} \in \mathbb{R}\)`, y queremos predecir `\(Y_{n+1}\)`. 
+Dado una probabilidad  `\(\alpha\)` llamado tasa de no cobertura, queremos encontrar una banda de predicción para `\(Y_{n+1}\)`
+&lt;/span&gt;
+
+## Intervalo conformal
+
+
+`$$P\left(Y_{n+1} \in \hat{C} \left(X_{n+1}\right) \right) \geq 1-\alpha$$`
+
+&lt;span style="font-size: 1.1em;"&gt;
+Asumiendo que la siguiente observación proviene de la misma distribución `\(P\)` e independientes, con la que fue ajustado el modelo.
+&lt;/span&gt;
+
+---
+
+## Una solución trivial 
+
+&lt;span style="font-size: 1.1em;"&gt;
+Construimos el conjunto de predicción de la siguiente manera 
+&lt;/span&gt;
+
+`$$\hat C_n(X_{n+1}) =
+\begin{cases}
+\mathcal{Y} &amp; \text{con probabilidad } 1-\alpha, \\
+\varnothing &amp; \text{con probabilidad } \alpha .
+\end{cases}$$`
+
+&lt;span style="font-size: 1.1em;"&gt;
+Podemos lograr que `\(P(y_{n+1} \in \hat{C(X_{n+1})} \geq 1 - \alpha\)` en muestras finitas haciendo algo no trivial?
+&lt;/span&gt;
+
+
+---
+
+## Intercambiabilidad es todo lo que necesitamos
+
+- &lt;span style="font-size: 1.1em;"&gt;Todo lo que debemos saber es que `\(y_{1},...y_{n+1}\)` son intercambiables, lo cuál es una suposición mas débil que asumir que sean iid
+&lt;/span&gt;
+
+
+- &lt;span style="font-size: 1.1em;"&gt;Intercambiabilidad significa que su distribución no cambia bajo permutaciones 
+&lt;/span&gt;
+
+
+- `\((y_1,...,y_{n+1})  \overset{d}{=} (y_{\sigma(1)},...y_{\sigma(n+1)})\)` &lt;span style="font-size: 1.1em;"&gt;para toda permutación  `\(\sigma\)`
+&lt;/span&gt;
+
+&lt;span style="font-size: 1.1em;"&gt;
+el rango de `\(Y_{n+1}\)` se distribuye uniforme en el conjunto `\(\{1,...,n+1\}\)`, es decir, la predicción `\(Y_{n+1}\)` tiene probabilidad  uniforme `\(\frac{1}{n+1}\)` de caer en cualquier posición del conjunto ordenado.
+&lt;/span&gt;
+
+---
+
+class: header_background
+
+# Método Naive
+
+Consideremos un problema de regresión, donde el predictor  `\(\hat{f}_n(x)\)` predice el valor de y que esperamos observar en `\(x\)`. 
+
+Nuestro objetivo será encontrar los residuos y computar `\(\hat{q}\)`
+
+Definimos los residuos de entrenamiento 
+
+`$$R_i =|Y_i -\hat{f}_n(X_i)|, \ i=1,....,n$$`
+`$$\hat{q} = [(1 - \alpha)(n+1)] \ el \ más \ chico\  de\ R_i,....,R_n$$`
+Entonces tenemos:
+
+`$$\hat{C_n}(x) = \{y :|y - \hat{f_n}(x)| \leq \hat{q_n} \}$$`
+O en otras palabras:
+
+`$$\hat{C_n}(x) = [\hat{f}_n(x) - \hat{q}_n,\hat{f}_n(x) + \hat{q}_n]$$`
+
+---
+
+class: header_background
+
+# Método Naive
+
+
+
+
+## Cuando funciona bien
+
+- &lt;span style="font-size: 1.1em;"&gt;Este método es aproximadamente válido para muestras grandes, bajo la condición que `\(\hat{f_n(x)}\)` sea lo suficientemente preciso.&lt;/span&gt;
+
+- &lt;span style="font-size: 1.1em;"&gt;Bajo condiciones de regularidad tanto para la distribución `\(P\)` y para la función de regresión `\(\hat{f_n}\)`.&lt;/span&gt;
+
+## Desventajas
+
+- &lt;span style="font-size: 1.1em;"&gt; El método usa los mismos datos para entrenar modelo y para  calcular los residuos, por lo que se puede generar overfitting.&lt;/span&gt;
+
+---
+
+class: header_background
+
+# Split Conformal
+
+
+### Solución
+Para evitar esta subcobertura se presenta la metodología de separación de la muestra 
+**Intervalos de predicción conformales**
+
+
+Se divide los datos en 2 conjuntos disjuntos, uno para entrenar el modelo y otro subconjunto para predicción (conjunto de calibración).
+
+- `\(T_1\)` ss el conjunto de entrenamiento (`\(n_1\)` puntos de la muestra)
+- `\(T_2\)` es el conjunto de testeo (`\(n_2\)` puntos de la muestra)
+
+-Ajustamos `\(\hat{f}\)` usando el conjunto de entrenamiento `\(T_1\)` y computamos los residuos usando los datos de calibración `\(T_2\)`
+
+- Encontramos el cuantil 
+
+`$$\hat{q} = [(1 - \alpha)(n_2 +1)] \ el \ más  \ chico  \ r_i, i \in T_2$$`
+- Construimos el intervalo de predicción conformal 
+
+`$$C(x) = [\hat{f}_{n_1}(x) - \hat{q}_{n_2}, \hat{f_{n_1}}(x) +\hat{q}_{n_2}]$$`
+
+
+---
+
+class: header_background
+
+# Split Conformal
+
+## Ventajas
+
+- &lt;span style="font-size: 1.1em;"&gt; Es sencillo de implementar y sólo requiere entrenar el modelo una vez.&lt;/span&gt;
+- &lt;span style="font-size: 1.1em;"&gt; Se puede aplicar sobre cualquier modelo (lineal, random forest, etc.).&lt;/span&gt;
+
+## Desventajas
+
+- &lt;span style="font-size: 1.1em;"&gt; Usa sólo una parte de los datos para entrenar el modelo, lo que puede empeorar la precisión de la predicción.&lt;/span&gt;
+- &lt;span style="font-size: 1.1em;"&gt; Los resultados pueden variar según cómo se haga la partición de la muestra.&lt;/span&gt;
+
+
+
+---
+
+class: header_background
+
+# Full conformal
+
+Buscamos una forma de lograr un nivel de cobertura sin separar los datos. Para cada valor candidato `\(y\)` entrenamos nuestro algoritmo de predicción con un conjunto aumentado: `\((X_1,Y_1),...,(X_n,Y_n),(x,y)\)`. Es decir, usamos un conjunto de entrenamiento extendido con `\(n + 1\)` puntos incluyendo el nuevo par (x,y).
+
+A partir de este conjunto, obtenemos un predictor puntual `\(\hat{f}_n(x,y)\)`
+
+Luego, definimos los residuos como:
+
+- para i = 1,....,n
+`$$R_{i}^{(x,y)} = |Y_i - \hat{f}_n(x,y)(X_i)|$$`
+- Para el nuevo punto de prueba:
+`$$R_{n+1}^{(x,y)} = |y - \hat{f_{n}}(x,y)(x)|$$`
+
+Finalmente, definimos el conjunto conformal como:
+
+`$$\hat{C_n}(x) = \{ y \in R_{n+1}^{(x,y)} \leq [(1- \alpha)(n+1)] - ésimo\ menor\ de\ los\ R_{1}^{((x,y))},...,R_{n}^{x,y}\}$$`
+
+
+---
+
+class: header_background
+
+# Full conformal 
+
+Es decir, para cada valor candidato y, se crea un conjunto de entrenamiento aumentado:
+
+`$$\{(X_1,Y_1),....,(X_n,Y_n),(X_{n+1},y)\}$$`
+Luego se evalúa si el residuo del nuevo punto de la prueba `\(R_{n+1}^{(x,y)}\)` está entre los más pequeños de todos los residuos generados con ese conjunto extendido. Si cumple la condición, entonces ese `\(y\)` pertenece al intervalo de predicción.
+
+---
+
+class: header_background
+
+# Full Conformal
+
+## Ventajas
+
+- &lt;span style="font-size: 1.1em;"&gt; Es un método conceptualmente “completo” que sirve como referencia teórica para la inferencia conformal.&lt;/span&gt;
+
+## Desventajas
+
+- &lt;span style="font-size: 1.1em;"&gt; Es extremadamente costoso computacionalmente, ya que requiere reentrenar el modelo para muchos valores candidatos de \(y\).&lt;/span&gt;
+- &lt;span style="font-size: 1.1em;"&gt; En modelos deterministas (como la regresión lineal) tiende a producir intervalos marginales poco dependientes de \(x\), lo que lo hace menos informativo en la práctica.&lt;/span&gt;
+
+
+
+---
+
+class: header_background
+
+# Jacknife 
+
+
+Este algoritmo es bastante similar al Leave One Out (LOOV). Aquí la idea es separar el conjunto en entrenamiento y testeo, dejando una observación aparte para testear, es decir, entrenas `\(\hat{f}_{-i}\)` dejando fuera la observación `\(i\)`, luego se calculan el residuo conformal `\(R_{i}\)` sin esa observación. 
+
+Se procede a ordenar los residuos `\(R_i\)` y se calcula el k-ésimo valor más chico, donde `\(k = [n(1-\alpha)]\)` , ese valor vendría a ser la mitad del ancho del intervalo.
+Por último, se entrena `\(\hat{f}\)` con todos los datos y se devuelve el intervalo de predicción conformal para un nuevo punto `\(x \in R^d\)`.
+
+`$$C_{jack}(x) = [\hat{f}(x) - \hat{d} , \hat{f}(x) + \hat{d}]$$`
+
+---
+
+class: header_background
+
+# Jacknife
+
+## Ventajas
+
+- &lt;span style="font-size: 1.1em;"&gt; Aprovecha mejor la información que Split, ya que utiliza todas las observaciones en el procedimiento leave-one-out.&lt;/span&gt;
+- &lt;span style="font-size: 1.1em;"&gt; Proporciona residuos más realistas que el método Naive, reduciendo el problema de sobreajuste.&lt;/span&gt;
+
+## Desventajas
+
+- &lt;span style="font-size: 1.1em;"&gt; Requiere entrenar un modelo por cada observación (leave-one-out), lo que puede ser muy costoso computacionalmente.&lt;/span&gt;
+- &lt;span style="font-size: 1.1em;"&gt; En modelos complejos como random forest el tiempo de cómputo puede volverse prohibitivo.&lt;/span&gt;
+
+
+
+---
+
+class: header_background
+
+
+# Conclusión 
+
+- &lt;span style="font-size: 1.2em;"&gt;La inferencia conformal proporciona intervalos simples y fácilmente interpretables, sin requerir supuestos paramétricos ni teoría asintótica.&lt;/span&gt;
+
+- &lt;span style="font-size: 1.2em;"&gt;Su validez se basa únicamente en la intercambiabilidad de los datos, lo que permite construir intervalos de predicción a partir del orden de los residuos.&lt;/span&gt;
+
+- &lt;span style="font-size: 1.2em;"&gt;Se puede aplicar sobre cualquier modelo ya sea flexible o no flexible (aunque no sea computacionalmente eficiente).&lt;/span&gt;
+
+- &lt;span style="font-size: 1.2em;"&gt;Trade-off entre precisión y simplicidad: el método de Split conformal sacrifica parte de la muestra para calibración, por lo que utiliza menos datos para entrenar el modelo. En contraste, otros métodos como el Full conformal es más costoso computacionalmente pero utiliza mejor la información disponible.&lt;/span&gt;
+
+---
+class: middle, center
+
+##¿Preguntas?
+
+
+---
+class: middle, center
+
+##Muchas gracias
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+  "ratio": "16:9",
+  "highlightStyle": "github",
+  "slideNumberFormat": "%current%",
+  "highlightLines": true,
+  "countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

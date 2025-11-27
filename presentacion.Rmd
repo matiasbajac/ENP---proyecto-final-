@@ -1,8 +1,8 @@
 ---
 title : Inferencia Conformal
-subtitle : Estadística no paramétrica 2025
+subtitle : Estadística no paramétrica
 author : Matías Bajac y Jimena Padín 
-date : 27 de Noviembre 2025
+date : 2025
 output : 
   xaringan::moon_reader:
    css : ["xaringan-themer.css","custom.css"]   
@@ -40,7 +40,7 @@ style_duo_accent(
   header_font_google = google_font("Titillium Web", "600"),
    text_font_google   = google_font("Crimson Pro", "300", "300i"),
    code_font_google   = google_font("IBM Plex Mono"),
-   base_font_size = "20px",
+   base_font_size = "22px",
    text_font_size = "1rem",
    code_font_size = "0.6rem",
    code_inline_font_size = "1.2em",
@@ -111,6 +111,7 @@ class: header_background
 
 - ### Intervalos de predicción mediante Jackknife
 
+- ### Simulación en R 
 ---
 
 class: header_background
@@ -120,8 +121,10 @@ class: header_background
 ## El trabajo fue basado en: 
 
 .center[
-Ryan Tibshirani (2023)
-Conformal Prediction.Advanced Topics in Statistical Learning.
+<span style="font-size: 1.2em;">
+Ryan Tibshirani (2023)<br>
+Conformal Prediction. Advanced Topics in Statistical Learning.
+</span>
 ]
 
 ---
@@ -131,23 +134,28 @@ class: header_background
 
 # Inferencia predictiva
 
-
-El autor presenta un marco general para  cuantificar la incertidumbre en problemas de predicción sin importar supuestos paramétricos sobre la distribución P de los datos. la idea central consiste en transformar cualquier predictor puntual en un predictor para conjuntos que garantice conbertura válida en muestras finitas 
+<span style="font-size: 1.1em;">
+El autor presenta un marco general para  cuantificar la incertidumbre en problemas de predicción sin importar supuestos paramétricos sobre la distribución P de los datos. la idea central consiste en transformar cualquier predictor puntual en un predictor para conjuntos que garantice cobertura válida en muestras finitas 
 Consideremos el problema $(X_i,Y_i) \sim P$ iid en  donde cada $X_{i} \in \mathbb{R}^{d} \  \ Y_{i} \in \mathbb{R}$, y queremos predecir $Y_{n+1}$. 
 Dado una probabilidad  $\alpha$ llamado tasa de no cobertura, queremos encontrar una banda de predicción para $Y_{n+1}$
-
+</span>
 
 ## Intervalo conformal
 
 
 $$P\left(Y_{n+1} \in \hat{C} \left(X_{n+1}\right) \right) \geq 1-\alpha$$
 
-
+<span style="font-size: 1.1em;">
 Asumiendo que la siguiente observación proviene de la misma distribución $P$ e independientes, con la que fue ajustado el modelo.
+</span>
+
+---
 
 ## Una solución trivial 
 
+<span style="font-size: 1.1em;">
 Construimos el conjunto de predicción de la siguiente manera 
+</span>
 
 $$\hat C_n(X_{n+1}) =
 \begin{cases}
@@ -155,24 +163,41 @@ $$\hat C_n(X_{n+1}) =
 \varnothing & \text{con probabilidad } \alpha .
 \end{cases}$$
 
+<span style="font-size: 1.1em;">
 Podemos lograr que $P(y_{n+1} \in \hat{C(X_{n+1})} \geq 1 - \alpha$ en muestras finitas haciendo algo no trivial?
-
+</span>
 
 
 ---
 
+## Intercambiabilidad es todo lo que necesitamos
+
+- <span style="font-size: 1.1em;">Todo lo que debemos saber es que $y_{1},...y_{n+1}$ son intercambiables, lo cuál es una suposición mas débil que asumir que sean iid
+</span>
 
 
+- <span style="font-size: 1.1em;">Intercambiabilidad significa que su distribución no cambia bajo permutaciones 
+</span>
+
+
+- $(y_1,...,y_{n+1})  \overset{d}{=} (y_{\sigma(1)},...y_{\sigma(n+1)})$ <span style="font-size: 1.1em;">para toda permutación  $\sigma$
+</span>
+
+<span style="font-size: 1.1em;">
+el rango de $Y_{n+1}$ se distribuye uniforme en el conjunto $\{1,...,n+1\}$, es decir, la predicción $Y_{n+1}$ tiene probabilidad  uniforme $\frac{1}{n+1}$ de caer en cualquier posición del conjunto ordenado.
+</span>
+
+---
 
 class: header_background
 
 # Método Naive
 
-Consideremos un problema de regresión, donde el predictor  $\hat{f}_n(x)$ predice el valor de y que esperamos observar en x. 
+Consideremos un problema de regresión, donde el predictor  $\hat{f}_n(x)$ predice el valor de y que esperamos observar en $x$. 
 
-Nuestro objetivo será encontrar los resiudos y computar $\hat{q}$
+Nuestro objetivo será encontrar los residuos y computar $\hat{q}$
 
-Definimos los resiudos de entrenamiento 
+Definimos los residuos de entrenamiento 
 
 $$R_i =|Y_i -\hat{f}_n(X_i)|, \ i=1,....,n$$
 $$\hat{q} = [(1 - \alpha)(n+1)] \ el \ más \ chico\  de\ R_i,....,R_n$$
@@ -194,10 +219,13 @@ class: header_background
 
 ## Cuando funciona bien
 
-- Este método es aproximadamente válido para muestras grandes, bajo la condición que $\hat{f_n(x)}$ sea lo suficientemente preciso.
-- Bajo condiciones de regularidad tanto para la distribución $P$ y para la función de regresión $\hat{f_n}$.
+- <span style="font-size: 1.1em;">Este método es aproximadamente válido para muestras grandes, bajo la condición que $\hat{f_n(x)}$ sea lo suficientemente preciso.</span>
+
+- <span style="font-size: 1.1em;">Bajo condiciones de regularidad tanto para la distribución $P$ y para la función de regresión $\hat{f_n}$.</span>
+
 ## Desventajas
-- Este método usa los mismos datos para entrenar modelo y para  calcular los resiudos, por lo que se puede generar overfitting
+
+- <span style="font-size: 1.1em;"> El método usa los mismos datos para entrenar modelo y para  calcular los residuos, por lo que se puede generar overfitting.</span>
 
 ---
 
@@ -230,11 +258,29 @@ $$C(x) = [\hat{f}_{n_1}(x) - \hat{q}_{n_2}, \hat{f_{n_1}}(x) +\hat{q}_{n_2}]$$
 
 class: header_background
 
-## Full conformal prediction 
+# Split Conformal
 
-Buscamos una forma de lograr un nivel de cobertura sin separar los datos, para eso entrenamos nuestro algoritmo de predicción con los datos $(X_1,Y_1),...,(X_n,Y_n),(x,y)$. Es decir, usamos un conjunto de entrenamiento extendido con n + 1 puntos incluyendo el nuevo par (x,y) 
+## Ventajas
 
-A partir de este conjunto, obtenemos un predictor punutal $\hat{f}_n(x,y)$
+- <span style="font-size: 1.1em;"> Es sencillo de implementar y sólo requiere entrenar el modelo una vez.</span>
+- <span style="font-size: 1.1em;"> Se puede aplicar sobre cualquier modelo (lineal, random forest, etc.).</span>
+
+## Desventajas
+
+- <span style="font-size: 1.1em;"> Usa sólo una parte de los datos para entrenar el modelo, lo que puede empeorar la precisión de la predicción.</span>
+- <span style="font-size: 1.1em;"> Los resultados pueden variar según cómo se haga la partición de la muestra.</span>
+
+
+
+---
+
+class: header_background
+
+# Full conformal
+
+Buscamos una forma de lograr un nivel de cobertura sin separar los datos. Para cada valor candidato $y$ entrenamos nuestro algoritmo de predicción con un conjunto aumentado: $(X_1,Y_1),...,(X_n,Y_n),(x,y)$. Es decir, usamos un conjunto de entrenamiento extendido con $n + 1$ puntos incluyendo el nuevo par (x,y).
+
+A partir de este conjunto, obtenemos un predictor puntual $\hat{f}_n(x,y)$
 
 Luego, definimos los residuos como:
 
@@ -250,12 +296,89 @@ $$\hat{C_n}(x) = \{ y \in R_{n+1}^{(x,y)} \leq [(1- \alpha)(n+1)] - ésimo\ meno
 
 ---
 
+class: header_background
 
-Es decir, para cada valor candidato y, se crea un cojunto de entrenamiento aumentado:
+# Full conformal 
+
+Es decir, para cada valor candidato y, se crea un conjunto de entrenamiento aumentado:
 
 $$\{(X_1,Y_1),....,(X_n,Y_n),(X_{n+1},y)\}$$
-Luego se evalúa si el residuo del nuevo punto de la prueba $R_{n+1}^{(x,y)}$  está entre los más pequeños de todos los residuos generados con ese conjunto extendido. Si cumple la condición, entonces ese y pertenece al intervalo de predicción.
+Luego se evalúa si el residuo del nuevo punto de la prueba $R_{n+1}^{(x,y)}$ está entre los más pequeños de todos los residuos generados con ese conjunto extendido. Si cumple la condición, entonces ese $y$ pertenece al intervalo de predicción.
 
+---
+
+class: header_background
+
+# Full Conformal
+
+## Ventajas
+
+- <span style="font-size: 1.1em;"> Es un método conceptualmente “completo” que sirve como referencia teórica para la inferencia conformal.</span>
+
+## Desventajas
+
+- <span style="font-size: 1.1em;"> Es extremadamente costoso computacionalmente, ya que requiere reentrenar el modelo para muchos valores candidatos de \(y\).</span>
+- <span style="font-size: 1.1em;"> En modelos deterministas (como la regresión lineal) tiende a producir intervalos marginales poco dependientes de \(x\), lo que lo hace menos informativo en la práctica.</span>
+
+
+
+---
+
+class: header_background
+
+# Jacknife 
+
+
+Este algoritmo es bastante similar al Leave One Out (LOOV). Aquí la idea es separar el conjunto en entrenamiento y testeo, dejando una observación aparte para testear, es decir, entrenas $\hat{f}_{-i}$ dejando fuera la observación $i$, luego se calculan el residuo conformal $R_{i}$ sin esa observación. 
+
+Se procede a ordenar los residuos $R_i$ y se calcula el k-ésimo valor más chico, donde $k = [n(1-\alpha)]$ , ese valor vendría a ser la mitad del ancho del intervalo.
+Por último, se entrena $\hat{f}$ con todos los datos y se devuelve el intervalo de predicción conformal para un nuevo punto $x \in R^d$.
+
+$$C_{jack}(x) = [\hat{f}(x) - \hat{d} , \hat{f}(x) + \hat{d}]$$
+
+---
+
+class: header_background
+
+# Jacknife
+
+## Ventajas
+
+- <span style="font-size: 1.1em;"> Aprovecha mejor la información que Split, ya que utiliza todas las observaciones en el procedimiento leave-one-out.</span>
+- <span style="font-size: 1.1em;"> Proporciona residuos más realistas que el método Naive, reduciendo el problema de sobreajuste.</span>
+
+## Desventajas
+
+- <span style="font-size: 1.1em;"> Requiere entrenar un modelo por cada observación (leave-one-out), lo que puede ser muy costoso computacionalmente.</span>
+- <span style="font-size: 1.1em;"> En modelos complejos como random forest el tiempo de cómputo puede volverse prohibitivo.</span>
+
+
+
+---
+
+class: header_background
+
+
+# Conclusión 
+
+- <span style="font-size: 1.2em;">La inferencia conformal proporciona intervalos simples y fácilmente interpretables, sin requerir supuestos paramétricos ni teoría asintótica.</span>
+
+- <span style="font-size: 1.2em;">Su validez se basa únicamente en la intercambiabilidad de los datos, lo que permite construir intervalos de predicción a partir del orden de los residuos.</span>
+
+- <span style="font-size: 1.2em;">Se puede aplicar sobre cualquier modelo ya sea flexible o no flexible (aunque no sea computacionalmente eficiente).</span>
+
+- <span style="font-size: 1.2em;">Trade-off entre precisión y simplicidad: el método de Split conformal sacrifica parte de la muestra para calibración, por lo que utiliza menos datos para entrenar el modelo. En contraste, otros métodos como el Full conformal es más costoso computacionalmente pero utiliza mejor la información disponible.</span>
+
+---
+class: middle, center
+
+##¿Preguntas?
+
+
+---
+class: middle, center
+
+##Muchas gracias
 
 
 
